@@ -7,10 +7,12 @@ on:
   pull_request:
     branches: [ '*' ]
 
+env:
+    VITASDK: /usr/local/vitasdk
+
 jobs:
   build_VPK:
-    runs-on: ubuntu-20.04
-    container: node:lts
+    runs-on: "ubuntu-20.04"
     steps:
       # clone vitaTrak GitHub repo
       - name: Checkout code
@@ -18,22 +20,33 @@ jobs:
       # building dependencies (cmake, build-essential, etc.)
       - name: Install dependencies
         run: |
-          apt-get update
-          apt-get install -y cmake build-essential
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential libarchive-tools fakeroot zip
       # install vitaSDK
       - name: Install vitaSDK
         run: |
-          git clone https://github.com/samdisk11/vdpm_auto.git
-          cd vdpm_auto
+          git clone https://github.com/vitasdk/vdpm
+          cd vdpm
           ./bootstrap-vitasdk.sh
-          export VITASDK=/usr/local/vitasdk
           export PATH=$VITASDK/bin:$PATH
           ./install-all.sh
           cd ..
+      # replace libOpenMPT with prebuilt that has no MPG123 dependency
+      # file is in the repo
+      - name: Replace libOpenMPT
+        run: |
+          rm -rf $VITASDK/arm-vita-eabi/lib/libopenmpt.a
+          cp .github/libopenmpt.a $VITASDK/arm-vita-eabi/lib/
       # build vitaTrak (VPK)
       - name: Build vitaTrak
         run: |
           mkdir build
           cd build
-          cmake .. -DVITASDK=$VITASDK
+          cmake ..
           make
+      # upload VPK as artifact
+      - name: Upload VPK
+        uses: actions/upload-artifact@v3
+        with:
+          name: vitaTrak.VPK
+          path: build/vitaTrakUi.vpk

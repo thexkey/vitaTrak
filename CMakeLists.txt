@@ -2,7 +2,7 @@
 ## This is a simple tracker music player for the PSVITA
 ## Recommended to use CLion to build this project.
 
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.1)
 
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     if(DEFINED ENV{VITASDK})
